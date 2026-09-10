@@ -19,6 +19,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Compile macOS menu bar
+        if: runner.os == 'macOS'
+        run: swiftc installers/macos/MemohMenuBar.swift -o "$RUNNER_TEMP/MemohMenuBar"
   adapters:
     strategy:
       matrix:
