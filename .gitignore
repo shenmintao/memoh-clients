@@ -1,0 +1,12 @@
+node_modules/
+dist/
+artifacts/
+coverage/
+*.log
+.env*
+*.dpapi
+*.key
+*.pem
+*.jks
+*.keystore
+.DS_Store

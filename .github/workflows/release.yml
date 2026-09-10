@@ -1,0 +1,33 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck && pnpm test && pnpm build
+      - run: |
+          for adapter in pi-acp codex-acp; do
+            (cd "adapters/$adapter" && npm ci && npm run typecheck && npm test && npm run build)
+          done
+          node scripts/package.mjs
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$TAG" artifacts/runtime.tgz artifacts/pi-acp.tgz artifacts/codex-acp.tgz artifacts/SHA256SUMS --verify-tag --draft --generate-notes

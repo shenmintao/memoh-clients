@@ -1,0 +1,17 @@
+{
+  "name": "memoh-clients",
+  "private": true,
+  "version": "0.19.0-custom.1",
+  "packageManager": "pnpm@10.27.0",
+  "scripts": {
+    "test": "pnpm --filter @memohai/runtime test",
+    "typecheck": "pnpm --filter @memohai/runtime typecheck",
+    "build": "pnpm --filter @memohai/runtime build",
+    "pack:runtime": "pnpm --filter @memohai/runtime pack --out ../../artifacts/runtime.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.5",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
