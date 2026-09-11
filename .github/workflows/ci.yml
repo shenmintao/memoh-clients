@@ -19,6 +19,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Test Windows tray connection status
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./installers/windows/Test-TrayConnectionState.ps1
       - name: Compile macOS menu bar
         if: runner.os == 'macOS'
         run: swiftc installers/macos/MemohMenuBar.swift -o "$RUNNER_TEMP/MemohMenuBar"

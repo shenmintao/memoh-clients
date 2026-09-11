@@ -112,6 +112,7 @@ $trayPath = Join-Path $memohDir 'MemohTray.ps1'
 $trayLauncher = Join-Path $memohDir 'Launch-MemohTray.vbs'
 $taskLauncher = Join-Path $memohDir 'Start-MemohRuntime.vbs'
 Copy-Item -LiteralPath $trayTemplate -Destination $trayPath -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'RuntimeStatus.ps1') -Destination (Join-Path $memohDir 'RuntimeStatus.ps1') -Force
 
 $trayCommand = '"' + $pwsh.Source + '" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $trayPath + '"'
 $trayCommandLiteral = '"' + $trayCommand.Replace('"', '""') + '"'

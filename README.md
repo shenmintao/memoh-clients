@@ -7,6 +7,7 @@ Windows、macOS、Linux/NAS 共用的 Memoh Remote Runtime，以及定制 Pi/Cod
 ## 功能
 
 - Runtime 上报版本，Windows 托盘与 macOS 菜单栏显示版本。
+- Windows 托盘通过设备自己的 Runtime Key 异步查询服务端连接状态；查询失败显示状态未知，不从日志或进程存在推断在线。需要服务端提供 `/runtimes/status` 接口。
 - 本机发现 MCP 与 Skills，供绑定的 Bot 按权限调用；Skill 正文按需读取。
 - MCP 配置、访问令牌和外部 Agent 登录状态留在运行设备上。
 - Pi/Codex ACP 支持 Memoh 运行中补充指令。

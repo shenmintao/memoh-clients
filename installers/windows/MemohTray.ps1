@@ -1,5 +1,6 @@
 ﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'RuntimeStatus.ps1')
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -145,6 +146,7 @@ $script:lastState = ''
 $script:currentIcon = $null
 $script:exiting = $false
 $script:launcherProcessId = 0
+$script:statusMonitor = $null
 
 foreach ($requiredPath in @($script:keyFile, $script:runtimeMeta, $script:runtimeCli)) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
@@ -216,6 +218,7 @@ function Start-RuntimeProcess {
     if (Test-RuntimeRunning) {
         return
     }
+    if ($null -ne $script:statusMonitor) { Reset-MemohStatusMonitor $script:statusMonitor }
     if ($null -ne $script:runtimeProcess) {
         try { $script:runtimeProcess.Dispose() } catch {}
         $script:runtimeProcess = $null
@@ -351,31 +354,7 @@ function Get-RuntimeConnectionState {
         if ($script:userStopped) { return 'stopped' }
         return 'restarting'
     }
-    if (-not (Test-Path -LiteralPath $script:runtimeLog)) {
-        return 'connecting'
-    }
-    try {
-        $lines = @(Get-Content -LiteralPath $script:runtimeLog -Tail 100 -ErrorAction Stop)
-        $startIndex = -1
-        for ($index = 0; $index -lt $lines.Count; $index++) {
-            if ($lines[$index] -match 'starting memoh-runtime') { $startIndex = $index }
-        }
-        $statusLines = if ($startIndex -ge 0 -and $startIndex + 1 -lt $lines.Count) {
-            @($lines[($startIndex + 1)..($lines.Count - 1)])
-        }
-        else {
-            @()
-        }
-        $lastStatus = $statusLines |
-            Where-Object { $_ -match '^(connected|connecting|disconnected|stopped)(:|$)' } |
-            Select-Object -Last 1
-        if ($lastStatus -match '^connected($|:)') { return 'online' }
-        if ($lastStatus -match '^stopped($|:)') { return 'restarting' }
-        return 'connecting'
-    }
-    catch {
-        return 'connecting'
-    }
+    return Get-MemohServerState $script:statusMonitor
 }
 
 function Update-TrayState {
@@ -383,7 +362,10 @@ function Update-TrayState {
     $state = Get-RuntimeConnectionState
     $script:statusItem.Text = switch ($state) {
         'online' { 'Runtime：已连接' }
-        'connecting' { 'Runtime：正在连接…' }
+        'offline' { 'Runtime：服务端显示离线' }
+        'unknown' { 'Runtime：暂时无法确认状态' }
+        'unauthorized' { 'Runtime：连接凭据无效' }
+        'unsupported' { 'Runtime：服务端需升级' }
         'stopped' { 'Runtime：已停止' }
         default { 'Runtime：进程异常，正在重启…' }
     }
@@ -394,7 +376,8 @@ function Update-TrayState {
     if ($state -ne $script:lastState) {
         $newIcon = switch ($state) {
             'online' { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(30, 170, 90)) }
-            'connecting' { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(225, 145, 20)) }
+            'unknown' { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(225, 145, 20)) }
+            'unsupported' { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(225, 145, 20)) }
             'stopped' { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(125, 125, 125)) }
             default { New-MemohStatusIcon ([System.Drawing.Color]::FromArgb(200, 55, 55)) }
         }
@@ -404,11 +387,15 @@ function Update-TrayState {
         if ($null -ne $oldIcon) { $oldIcon.Dispose() }
         $script:notifyIcon.Text = switch ($state) {
             'online' { 'Memoh Runtime - Connected' }
-            'connecting' { 'Memoh Runtime - Connecting' }
+            'offline' { 'Memoh Runtime - Offline' }
+            'unknown' { 'Memoh Runtime - Status Unknown' }
+            'unauthorized' { 'Memoh Runtime - Invalid Credential' }
+            'unsupported' { 'Memoh Runtime - Server Update Required' }
             'stopped' { 'Memoh Runtime - Stopped' }
             default { 'Memoh Runtime - Restarting' }
         }
         $script:lastState = $state
+        Write-TrayLog "Runtime status: $state"
     }
 }
 
@@ -458,6 +445,7 @@ $script:timer.add_Tick({
         if ($null -eq $script:runtimeProcess -and -not $script:userStopped -and [DateTime]::Now -ge $script:nextAutoStart) {
             Start-RuntimeProcess
         }
+        Update-MemohStatusMonitor $script:statusMonitor
         Update-TrayState
     }
     catch {
@@ -467,10 +455,14 @@ $script:timer.add_Tick({
 
 try {
     Write-TrayLog 'Tray controller starting.'
+    $metadata = Get-Content -LiteralPath $script:runtimeMeta -Raw | ConvertFrom-Json
+    $runtimeId = if ($metadata.PSObject.Properties['id']) { [string]$metadata.id } else { '' }
+    $script:statusMonitor = New-MemohStatusMonitor ([string]$metadata.server) $script:keyFile $runtimeId
     Initialize-LauncherWatch
     Stop-StaleRuntimeProcesses
     Start-Sleep -Milliseconds 500
     Start-RuntimeProcess
+    Update-MemohStatusMonitor $script:statusMonitor
     Update-TrayState
     $script:notifyIcon.BalloonTipTitle = 'Memoh Runtime'
     $script:notifyIcon.BalloonTipText = '后台连接已启动。右键托盘图标可停止、重启或退出。'
@@ -480,6 +472,7 @@ try {
 }
 finally {
     $script:timer.Stop()
+    if ($null -ne $script:statusMonitor) { Close-MemohStatusMonitor $script:statusMonitor }
     if (-not $script:exiting) {
         try { Stop-RuntimeProcess -MarkUserStopped $true } catch {}
     }
