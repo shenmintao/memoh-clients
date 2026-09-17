@@ -77,7 +77,6 @@ beforeEach(async () => {
     transport.target,
     credentials.createInsecure(),
     {
-      'grpc.enable_http_proxy': 0,
       'grpc.max_receive_message_length': grpcMessageLimit,
       'grpc.max_send_message_length': grpcMessageLimit,
     },

@@ -1,7 +1,7 @@
 {
   "name": "memoh-clients",
   "private": true,
-  "version": "0.19.0-custom.1",
+  "version": "0.20.0-custom.1",
   "packageManager": "pnpm@10.27.0",
   "scripts": {
     "test": "pnpm --filter @memohai/runtime test",

@@ -11,6 +11,8 @@ Windows、macOS、Linux/NAS 共用的 Memoh Remote Runtime，以及定制 Pi/Cod
 - 本机发现 MCP 与 Skills，供绑定的 Bot 按权限调用；Skill 正文按需读取。
 - MCP 配置、访问令牌和外部 Agent 登录状态留在运行设备上。
 - Pi/Codex ACP 支持 Memoh 运行中补充指令。
+- 0.20 已合入官方设备注册持久化、自动重连和 `enroll` / `run` / `service` 命令。新安装可使用官方用户服务管理；已有托盘或系统服务继续使用当前启动器，避免重复注册。
+- 服务端 0.20 定制版将 Pi/ACP 适配到官方会话队列；App 和网页共用队列接口。新 Codex 会话可优先使用上游直连运行器，旧 ACP 会话无需重建历史。
 
 ## 目录
 
