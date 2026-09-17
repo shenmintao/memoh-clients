@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory)][string]$Server,
     [string]$MachineName = $env:COMPUTERNAME,
-    [string]$RuntimeVersion = '0.19.0-local-capabilities.1',
+    [string]$RuntimeVersion = '0.20.0-custom.1',
     [string]$PiAcpVersion = '0.0.33-local-mcp.1',
     [string]$PiVersion = '0.85.0',
     [string]$RuntimePackage = (Join-Path $PSScriptRoot '../../artifacts/runtime.tgz'),

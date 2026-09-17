@@ -6,7 +6,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 RUNTIME_PACKAGE="${MEMOH_RUNTIME_PACKAGE:-$script_dir/../../artifacts/runtime.tgz}"
 PI_ACP_PACKAGE="${MEMOH_PI_ACP_PACKAGE:-$script_dir/../../artifacts/pi-acp.tgz}"
 MACHINE_NAME="${MEMOH_MACHINE_NAME:-$(hostname)}"
-RUNTIME_VERSION="${MEMOH_RUNTIME_VERSION:-0.19.0-local-capabilities.1}"
+RUNTIME_VERSION="${MEMOH_RUNTIME_VERSION:-0.20.0-custom.1}"
 PI_ACP_VERSION="${PI_ACP_VERSION:-0.0.33-local-mcp.1}"
 PI_VERSION="${PI_VERSION:-0.85.0}"
 
